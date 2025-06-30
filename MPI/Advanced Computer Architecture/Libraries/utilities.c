@@ -56,7 +56,7 @@ char *split_dataset(char *txt, size_t *chunklen, size_t txtlen, size_t patlen, s
 
 	char *chunk = (char *)malloc(sizeof(char) * (offset +1));
 	null_check(chunk);
-	strlcpy(chunk, txt, offset+1);
+	strncpy(chunk, txt, offset+1);
 	chunk[offset] = '\0';
 	*chunklen = offset;
 
