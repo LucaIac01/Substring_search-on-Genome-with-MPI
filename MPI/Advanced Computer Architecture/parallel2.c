@@ -1,8 +1,3 @@
-/////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-//////////////////////// Main Body \\\\\\\\\\\\\\\\\\\\\\\
-//////////////// Vito Giacalone  (546646) \\\\\\\\\\\\\\\\
-/////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -10,18 +5,12 @@
 #include <time.h>
 #include <stddef.h>
 #include "./Libraries/utilities.h"
-#include "./Libraries/hashfun.h"
+// #include "./Libraries/hashfun.h"
 #include "./Libraries/rabinkarp.h"
 
-///////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-/////////////////////////// Main function \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-///////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 int main(int argc, char *argv[])
 {
-	
-//////////////////////// Variables definition \\\\\\\\\\\\\\\\\\\\\\\\
-
 int rank;
 int size;
 int isActive = 0;
@@ -35,8 +24,6 @@ size_t chunklen;
 size_t offset = 0;
 long long int occurrences = 0;
 long long int total = 0;
-
-////////////////////// MPI layer initializzation \\\\\\\\\\\\\\\\\\\\\
 
 MPI_Init(&argc, &argv);
 MPI_Comm_rank(MPI_COMM_WORLD, &rank); 								//Get rank
@@ -76,15 +63,7 @@ if (isActive) {
 		MPI_Recv(pattern, patlen, MPI_CHAR, 0, 105, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //The slaves receive the pattern
 		}
 
-		////////////////////// Rabin Karp algorithm with different hash functions \\\\\\\\\\\\\\\\\\\\\
-
-		//occurrences = rabin_karp_polyHash(chunk, pattern, chunklen, patlen);
-		//occurrences = rabin_karp_loselose(chunk, pattern, chunklen, patlen);
-		//occurrences = rabin_karp_djb2(chunk, pattern, chunklen, patlen);
-		//occurrences = rabin_karp_sdbm(chunk, pattern, chunklen, patlen);
 		rabin_karp2(chunk, pattern, chunklen, patlen, &occurrences);
-
-		////////////////////// Free the memory \\\\\\\\\\\\\\\\\\\\\
 	
 		free(pattern); //free the pattern pointer
 		free(chunk); //free the pointer to the chunk
@@ -92,8 +71,6 @@ if (isActive) {
 
 printf("OCCURRENCES rank %d: %lld\n",rank, occurrences);
 	
-////////////////////// Gather the results from other processes \\\\\\\\\\\\\\\\\\\\\
-
 MPI_Reduce(&occurrences, &total, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);		//The master process collects all the occurrences found by the slaves
 clock_t end = clock(); 										//Stop the execution time measurement
 
@@ -103,13 +80,8 @@ if (rank == 0) {
 	printf("Time required %lf\n", time_spent);
 	printf("Program executed by %d cores over %d\n", executors, size);
 }
-
-////////////////////// MPI layer Finalization \\\\\\\\\\\\\\\\\\\\\
 	
 MPI_Finalize();	
 
 return 0;
 }
-
-//References
-//https://www.codingninjas.com/studio/library/rabin-karp-algorithm
