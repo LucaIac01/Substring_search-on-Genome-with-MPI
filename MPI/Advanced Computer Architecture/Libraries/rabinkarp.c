@@ -1,6 +1,6 @@
 #include "rabinkarp.h"
 
-void rabin_karp2(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences){
+void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences){
 
 	//SOME VARIABLES...
   size_t i,j;                      

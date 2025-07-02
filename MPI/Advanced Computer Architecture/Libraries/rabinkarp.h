@@ -11,5 +11,5 @@
 #define P 5
 #define M 101
 
-void rabin_karp2(char *txt, char *pattern, size_t lentxt, size_t lenpat, long long int *occurrences);
+void rabin_karp(char *txt, char *pattern, size_t lentxt, size_t lenpat, long long int *occurrences);
 #endif

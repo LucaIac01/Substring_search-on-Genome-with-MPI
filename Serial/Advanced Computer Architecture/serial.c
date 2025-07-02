@@ -3,7 +3,7 @@
 #include <time.h>
 #include <stddef.h>
 
-void rabin_karp2(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
+void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
 
 char *readFile(char *filename, size_t *len) {
     
@@ -27,7 +27,7 @@ char *readFile(char *filename, size_t *len) {
 }
 
 
-void rabin_karp2(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences){
+void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences){
 
 	//SOME VARIABLES...
   size_t i,j;                      
@@ -108,7 +108,7 @@ int main(int argc, char const *argv[])
 	char *pattern = readFile((char*)argv[2], &patlen);
 	char *txt = readFile((char*)argv[1], &txtlen);
 
-	rabin_karp2(txt, pattern, txtlen, patlen, &occurrences);
+	rabin_karp(txt, pattern, txtlen, patlen, &occurrences);
 	printf("OCCURENCES FOUND:%lld\n", occurrences);
 
 

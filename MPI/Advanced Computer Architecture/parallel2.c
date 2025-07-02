@@ -5,7 +5,6 @@
 #include <time.h>
 #include <stddef.h>
 #include "./Libraries/utilities.h"
-// #include "./Libraries/hashfun.h"
 #include "./Libraries/rabinkarp.h"
 
 
@@ -63,7 +62,7 @@ if (isActive) {
 		MPI_Recv(pattern, patlen, MPI_CHAR, 0, 105, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //The slaves receive the pattern
 		}
 
-		rabin_karp2(chunk, pattern, chunklen, patlen, &occurrences);
+		rabin_karp(chunk, pattern, chunklen, patlen, &occurrences);
 	
 		free(pattern); //free the pattern pointer
 		free(chunk); //free the pointer to the chunk
