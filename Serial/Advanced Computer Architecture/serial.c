@@ -3,6 +3,9 @@
 #include <time.h>
 #include <stddef.h>
 
+#define P 5
+#define M 101
+
 void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
 
 char *readFile(char *filename, size_t *len) {
