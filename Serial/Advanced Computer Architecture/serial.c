@@ -1,3 +1,6 @@
+#define _LARGEFILE_SOURCE
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>		
 #include <stdlib.h>
 #include <time.h>
@@ -5,24 +8,54 @@
 
 void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
 
-char *readFile(char *filename, size_t *len) {
-    
-    FILE *f = fopen(filename, "r");
-    fseeko(f, 0, SEEK_END);
-    *len = ftello(f);
-    rewind(f);
-    char *txt = (char *)malloc(*len + 1);
+char *readFile(const char *filename, size_t *len) {
+  // Open the file in read mode
+    FILE *f = fopen(filename, "r");                       
+    if (!f) {
+        perror("Error opening file");                  
+        return NULL;
+    }
 
-    if (fread(txt, 1, *len, f) != *len) {
-        fprintf(stderr, "Error, wrong input\n");
+    // Move to the end of the file to get its size
+    if (fseeko(f, 0, SEEK_END) != 0) {                     
+        perror("fseeko failed");                          
+        fclose(f);
+        return NULL;
+    }
+
+    // Get current file position (i.e., file size)
+    off_t size = ftello(f);                               
+    if (size == -1) {
+        perror("ftello failed");                     
+        fclose(f);
+        return NULL;
+    }
+
+    // Save the file size to output parameter
+    *len = (size_t)size;        
+    // Go back to the beginning of the file                          
+    rewind(f);                                            
+
+    // Allocate memory for the file + null terminator
+    char *txt = (char *)malloc(*len + 1);                 
+    if (!txt) {
+        fprintf(stderr, "Memory allocation failed\n");   
+        fclose(f);
+        return NULL;
+    }
+
+    // Read the entire file into memory
+    if (fread(txt, 1, *len, f) != *len) {                 
+        fprintf(stderr, "File read error\n");             
         free(txt);
         fclose(f);
         return NULL;
     }
 
-    txt[*len] = '\0';
-    fclose(f);
-    return txt;
+    // Null-terminate the string
+    txt[*len] = '\0';                                     
+    fclose(f);                                            
+    return txt;                                           
 }
 
 
@@ -30,7 +63,7 @@ void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenp
 
   size_t i,j;  
   // Number of characters in the input alphabet (ASCII)
-  int P = 256;
+  int P = 5;
   // A prime number for modulo operations to reduce collisions
   int M = 101;
   // Hash value for pattern
@@ -91,9 +124,9 @@ int main(int argc, char const *argv[])
 	}
 	long long int occurrences = 0;
 	char *pattern = readFile((char*)argv[2], &patlen);
-  if (pattern[patlen - 1] == '\n') {
-    pattern[--patlen] = '\0';
-}
+  if (pattern[patlen - 1] == '\n')
+  pattern[--patlen] = '\0';
+
 	char *txt = readFile((char*)argv[1], &txtlen);
 
 	rabin_karp(txt, pattern, txtlen, patlen, &occurrences);
