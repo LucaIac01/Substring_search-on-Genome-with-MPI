@@ -3,9 +3,6 @@
 #include <time.h>
 #include <stddef.h>
 
-#define P 5
-#define M 101
-
 void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
 
 char *readFile(char *filename, size_t *len) {
@@ -15,10 +12,9 @@ char *readFile(char *filename, size_t *len) {
     *len = ftello(f);
     rewind(f);
     char *txt = (char *)malloc(*len + 1);
-    //null_check(txt);
 
     if (fread(txt, 1, *len, f) != *len) {
-        fprintf(stderr, "Input reading error\n");
+        fprintf(stderr, "Error, wrong input\n");
         free(txt);
         fclose(f);
         return NULL;
@@ -32,65 +28,51 @@ char *readFile(char *filename, size_t *len) {
 
 void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences){
 
-	//SOME VARIABLES...
-  size_t i,j;                      
-  long long int pat_hash = 0;           
+  size_t i,j;  
+  // Number of characters in the input alphabet (ASCII)
+  int P = 256;
+  // A prime number for modulo operations to reduce collisions
+  int M = 101;
+  // Hash value for pattern
+  long long int pat_hash = 0;
+  // Hash value for current window of text
   long long int txt_hash = 0;
+  // High-order digit multiplier
   long long int h = 1;
+       
   *occurrences = 0;
 
 
-	//COMPUTES H = P^(LENPAT -1) MODULO M 
+	// Precompute h = pow(P, M-1) % q
   for (i = 0; i < lenpat - 1; i++)
   		h = (h * P) % M;
 
-  //COMPUTE THE HASHES FOR PATTERN AND FIRST WINDOW OF THE TEXT
+  // Compute initial hash values for pattern and first window of text
   for(i = 0; i < lenpat; i++){
     	pat_hash = (P * pat_hash + *(pattern + i)) % M;
       txt_hash = (P * txt_hash + *(txt + i)) % M;
     }
 
-  //FOR EACH SLIDING WINDOW OF THE TEXT OF THE DIMENSION OF THE PATTERN
+  // Slide the pattern over text one by one
   for(i = 0; i <= lentxt - lenpat; i++){
-
-  	 //CHECK IF THE HASHES ARE THE SAME
+    
+  	 // If hash values match, check characters one by one
      if(pat_hash == txt_hash){
-
-     		//IF THE HASHES ARE THE SAME THEN 
       	for(j = 0; j < lenpat; j++){
-
-      		//CHECK CHARACTER BY CHARACTER
           if(*(txt + i + j) != *(pattern + j)){
-
-            //IF THE PATTERN AND THE WINDOW ARE DIFFERENT THEN EXIT THE LOOP
             break;
-
           }
-
-
         }
-
-        //IF THE PATTERN AND THE WINDOW ARE THE SAME
         if(j == lenpat){
-   	       
-   	      //printf("Pattern found at index %d\n", rank == 0 ? i : i+(txt_len-(pat_len-1)+rest)-pat_len+1+((rank-1)*(txt_len-pat_len+1)));
-          
-          //INCREMENT THE NUMBER OF OCCURRENCES
           (*occurrences)++;
         }
       }
 
-    
-      //UPDATE THE HASH
-      if(i < lentxt - lenpat){
-        
-        //UPDATE THE HASH REMOVING THE FIRST ONE CHARACTER AND ADDING THE FIRST NEXT CHARACTER OF THE TEXT
+      // Calculate hash value for the next window
+      if(i < lentxt - lenpat){       
         txt_hash = (P * (txt_hash - *(txt + i) * h) + *(txt + i + lenpat)) % M;
-
-        //IF THE HASH IS NEGATIVE
+        // Ensure hash value is non-negative
         if(txt_hash < 0)
-        	
-        	//NORMALIZE IT
           txt_hash = txt_hash + M;
       }
     }
@@ -109,6 +91,9 @@ int main(int argc, char const *argv[])
 	}
 	long long int occurrences = 0;
 	char *pattern = readFile((char*)argv[2], &patlen);
+  if (pattern[patlen - 1] == '\n') {
+    pattern[--patlen] = '\0';
+}
 	char *txt = readFile((char*)argv[1], &txtlen);
 
 	rabin_karp(txt, pattern, txtlen, patlen, &occurrences);
