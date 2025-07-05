@@ -9,10 +9,10 @@
 #include <string.h>
 #include <stddef.h>
 
-size_t who_is_active(int *flag, size_t txtlen, size_t patlen, int cores);
+size_t who_is_active(int *active_flags, size_t text_length, size_t pattern_length, int cores);
 char *readFile(char *argv, size_t *len);
-char *split_dataset(char *txt, size_t *chunklen, size_t txtlen, size_t patlen, size_t offset, int executors);
-char *receive_dataset(size_t offset, size_t txtlen, size_t patlen, size_t *chunklen, int rank, int executors);
-void null_check(void *ptr);
+char *split_dataset(char *text_data, size_t *chunklen, size_t text_length, size_t pattern_length, size_t chunk_size, int num_workers);
+char *receive_dataset(size_t chunk_size, size_t text_length, size_t pattern_length, size_t *chunklen, int worker_rank, int num_workers);
+void null_check(void *memory_ptr);
 
 #endif
