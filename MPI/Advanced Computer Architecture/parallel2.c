@@ -8,80 +8,89 @@
 #include "./Libraries/rabinkarp.h"
 
 
+// Main function
 int main(int argc, char *argv[])
 {
-int rank;
+int worker_rank;
 int size;
 int isActive = 0;
-int executors;
-char *txt;
-char *pattern;
-char *chunk;
-size_t txtlen;
-size_t patlen;
+int num_workers;
+char *text_data;
+char *search_pattern;
+char *data_chunk;
+size_t text_length;
+size_t pattern_length;
 size_t chunklen;
-size_t offset = 0;
+size_t chunk_size = 0;
 long long int occurrences = 0;
 long long int total = 0;
 
+// Initialize MPI environment
 MPI_Init(&argc, &argv);
-MPI_Comm_rank(MPI_COMM_WORLD, &rank); 								//Get rank
-MPI_Comm_size(MPI_COMM_WORLD, &size); 								//Get size of the communicator
+// Get the worker_rank of the current process
+MPI_Comm_rank(MPI_COMM_WORLD, &worker_rank); 								
+// Get total number of processes
+MPI_Comm_size(MPI_COMM_WORLD, &size); 								
 
-int flag[size]; //Vector of active cores
+int worker_flags[size]; 
 
-if (rank == 0)
+// Master read file and calculate number of workers to use
+if (worker_rank == 0)
 {
-	txt = readFile(argv[1], &txtlen);							//Read text
-	pattern = readFile(argv[2], &patlen);							//Read pattern
-	if (pattern[patlen - 1] == '\n')
-    pattern[--patlen] = '\0';
-	null_check(txt);									//Check if the pointer to the text is not null
-	null_check(pattern);									//Check if the pointer to the pattern is not null		
-	executors = who_is_active(flag, txtlen, patlen, size); 					//Compute the number of active cores
+	text_data = readFile(argv[1], &text_length);							
+	search_pattern = readFile(argv[2], &pattern_length);							
+	if (search_pattern[pattern_length - 1] == '\n')
+    search_pattern[--pattern_length] = '\0';
+	null_check(text_data);									
+	null_check(search_pattern);									
+	num_workers = who_is_active(worker_flags, text_length, pattern_length, size); 					
 }
-	clock_t begin = clock(); //start the execution time measurement
-	MPI_Bcast(&executors, 1, MPI_INT, 0, MPI_COMM_WORLD);					//Send to each core the number of cores that will perform the search
-	MPI_Scatter(flag, 1, MPI_INT, &isActive, 1, MPI_INT, 0, MPI_COMM_WORLD);		//Send to each core a value that specify if the core will be and executor or not
-	MPI_Bcast(&txtlen, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);				//Send to each core the length of the text
-	MPI_Bcast(&patlen, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);				//Send to each core the length of the pattern
+	clock_t begin = clock(); 
+	MPI_Bcast(&num_workers, 1, MPI_INT, 0, MPI_COMM_WORLD);					
+	MPI_Scatter(worker_flags, 1, MPI_INT, &isActive, 1, MPI_INT, 0, MPI_COMM_WORLD);		
+	MPI_Bcast(&text_length, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);				
+	MPI_Bcast(&pattern_length, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);				
 
+// Active core
 if (isActive) {
-	offset = txtlen/executors;								//Compute the portion of text to analyze
-	if (rank == 0) {
-		chunk = split_dataset(txt, &chunklen, txtlen, patlen, offset, executors); 	//Sending a chunk of text to each core
-		null_check(chunk);
-		free(txt);
-		for (int i = 1; i < executors; ++i){
-			MPI_Send(pattern, patlen, MPI_CHAR, i, 105, MPI_COMM_WORLD); 		//Sending the pattern to all the cores
+	chunk_size = text_length/num_workers;
+	// Master splits and sends chunks to workers								
+	if (worker_rank == 0) {
+		data_chunk = split_dataset(text_data, &chunklen, text_length, pattern_length, chunk_size, num_workers); 	
+		null_check(data_chunk);
+		free(text_data);
+		for (int worker_id = 1; worker_id < num_workers; ++worker_id){
+			MPI_Send(search_pattern, pattern_length, MPI_CHAR, worker_id, 105, MPI_COMM_WORLD); 		
 		}	
-	} else {
-		pattern = (char *)malloc(sizeof(char)*(patlen+1));
-		null_check(pattern);
-		pattern[patlen]='\0';
-		chunk = receive_dataset(offset, txtlen, patlen, &chunklen, rank, executors); 	//The slaves receive the corresponding chunk of text
-		null_check(chunk);
-		MPI_Recv(pattern, patlen, MPI_CHAR, 0, 105, MPI_COMM_WORLD, MPI_STATUS_IGNORE); //The slaves receive the pattern
+	} else {		// Worker receives assigned text data_chunk
+		search_pattern = (char *)malloc(sizeof(char)*(pattern_length+1));
+		null_check(search_pattern);
+		search_pattern[pattern_length]='\0';
+		data_chunk = receive_dataset(chunk_size, text_length, pattern_length, &chunklen, worker_rank, num_workers); 	
+		null_check(data_chunk);
+		MPI_Recv(search_pattern, pattern_length, MPI_CHAR, 0, 105, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 		}
 
-		rabin_karp(chunk, pattern, chunklen, patlen, &occurrences);
+		// Perform Rabin-Karp search on assigned data_chunk
+		rabin_karp(data_chunk, search_pattern, chunklen, pattern_length, &occurrences);
 	
-		free(pattern); //free the pattern pointer
-		free(chunk); //free the pointer to the chunk
+		free(search_pattern); 
+		free(data_chunk); 
 	}
 
-printf("OCCURRENCES rank %d: %lld\n",rank, occurrences);
+printf("OCCURRENCES worker_rank %d: %lld\n",worker_rank, occurrences);
 	
-MPI_Reduce(&occurrences, &total, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);		//The master process collects all the occurrences found by the slaves
-clock_t end = clock(); 										//Stop the execution time measurement
+MPI_Reduce(&occurrences, &total, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);		
+clock_t end = clock(); 										
 
-if (rank == 0) {
+if (worker_rank == 0) {
 	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 	printf("Total occurrences %lld\n", total);
 	printf("Time required %lf\n", time_spent);
-	printf("Program executed by %d cores over %d\n", executors, size);
+	printf("Program executed by %d cores over %d\n", num_workers, size);
 }
 	
+// Clean up and close MPI environment
 MPI_Finalize();	
 
 return 0;
