@@ -1,5 +1,7 @@
 #ifndef UTIL_RABINKARP
 #define UTIL_RABINKARP
+#define _LARGEFILE_SOURCE
+#define _FILE_OFFSET_BITS 64
 
 #include <mpi.h>
 #include <stdlib.h>

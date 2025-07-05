@@ -34,6 +34,8 @@ if (rank == 0)
 {
 	txt = readFile(argv[1], &txtlen);							//Read text
 	pattern = readFile(argv[2], &patlen);							//Read pattern
+	if (pattern[patlen - 1] == '\n')
+    pattern[--patlen] = '\0';
 	null_check(txt);									//Check if the pointer to the text is not null
 	null_check(pattern);									//Check if the pointer to the pattern is not null		
 	executors = who_is_active(flag, txtlen, patlen, size); 					//Compute the number of active cores

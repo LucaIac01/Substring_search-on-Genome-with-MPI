@@ -8,8 +8,6 @@
 #include <mpi.h>
 #include <stddef.h>
 #include "utilities.h"
-#define P 5
-#define M 101
 
 void rabin_karp(char *txt, char *pattern, size_t lentxt, size_t lenpat, long long int *occurrences);
 #endif

@@ -29,26 +29,54 @@ size_t who_is_active(int *flag, size_t txtlen, size_t patlen, int cores){
 }
 
 
-char *readFile(char *filename, size_t *len) {
-    
-    FILE *f = fopen(filename, "r");
-    null_check(f);
-    fseeko(f, 0, SEEK_END);
-    *len = ftello(f);
-    rewind(f);
-    char *txt = (char *)malloc(*len + 1);
-    //null_check(txt);
+char *readFile(const char *filename, size_t *len) {
+  // Open the file in read mode
+    FILE *f = fopen(filename, "r");                       
+    if (!f) {
+        perror("Error opening file");                  
+        return NULL;
+    }
 
-    if (fread(txt, 1, *len, f) != *len) {
-        fprintf(stderr, "Input reading error\n");
+    // Move to the end of the file to get its size
+    if (fseeko(f, 0, SEEK_END) != 0) {                     
+        perror("fseeko failed");                          
+        fclose(f);
+        return NULL;
+    }
+
+    // Get current file position (i.e., file size)
+    off_t size = ftello(f);                               
+    if (size == -1) {
+        perror("ftello failed");                     
+        fclose(f);
+        return NULL;
+    }
+
+    // Save the file size to output parameter
+    *len = (size_t)size;        
+    // Go back to the beginning of the file                          
+    rewind(f);                                            
+
+    // Allocate memory for the file + null terminator
+    char *txt = (char *)malloc(*len + 1);                 
+    if (!txt) {
+        fprintf(stderr, "Memory allocation failed\n");   
+        fclose(f);
+        return NULL;
+    }
+
+    // Read the entire file into memory
+    if (fread(txt, 1, *len, f) != *len) {                 
+        fprintf(stderr, "File read error\n");             
         free(txt);
         fclose(f);
         return NULL;
     }
 
-    txt[*len] = '\0';
-    fclose(f);
-    return txt;
+    // Null-terminate the string
+    txt[*len] = '\0';                                     
+    fclose(f);                                            
+    return txt;                                           
 }
 
 
