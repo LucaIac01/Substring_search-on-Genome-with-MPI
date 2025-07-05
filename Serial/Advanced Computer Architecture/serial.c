@@ -130,7 +130,7 @@ int main(int argc, char const *argv[])
 	char *txt = readFile((char*)argv[1], &txtlen);
 
 	rabin_karp(txt, pattern, txtlen, patlen, &occurrences);
-	printf("OCCURENCES FOUND:%lld\n", occurrences);
+	printf("Occurences found:%lld\n", occurrences);
 
 
 	clock_t end = clock();
