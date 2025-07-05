@@ -1,5 +1,6 @@
 #include "utilities.h"
 
+// Checks if a pointer is NULL and exits with an error if so terminate the program
 void null_check(void *ptr){
 	if (!ptr)
 	{
@@ -9,14 +10,17 @@ void null_check(void *ptr){
 }
 
 
+// Determines how many workers (executors) will be active based on text/pattern length
 size_t who_is_active(int *flag, size_t txtlen, size_t patlen, int cores){
 
 	size_t actives = txtlen/patlen;
+	// Limit the number of active workers to the available cores
 	if (actives > cores)
 	{
 		actives = cores;
 	}
 
+	// Set the active flags for each core (1 = active, 0 = inactive)
 	for (int i = 0; i < cores; ++i)
 	{
 		if (i < actives)
@@ -80,6 +84,7 @@ char *readFile(const char *filename, size_t *len) {
 }
 
 
+// Splits the text into chunks and sends them to other MPI processes
 char *split_dataset(char *txt, size_t *chunklen, size_t txtlen, size_t patlen, size_t offset, int executors){
 
 	char *chunk = (char *)malloc(sizeof(char) * (offset +1));
@@ -88,21 +93,25 @@ char *split_dataset(char *txt, size_t *chunklen, size_t txtlen, size_t patlen, s
 	chunk[offset] = '\0';
 	*chunklen = offset;
 
-		for (int i = 1; i < executors; ++i)
+	// Send text chunks to other worker processes (rank > 0)
+	for (int i = 1; i < executors; ++i)
+	{
+		if (i <= executors-2)
 		{
-			if (i <= executors-2)
-			{
-					MPI_Send(txt+(offset*i)-patlen+1, offset + patlen-1, MPI_CHAR, i, 100, MPI_COMM_WORLD);
-			} else {
-					MPI_Send(txt+(offset*i)-patlen+1, txtlen - offset*i + patlen -1, MPI_CHAR, i, 101, MPI_COMM_WORLD);
-			}
+			MPI_Send(txt+(offset*i)-patlen+1, offset + patlen-1, MPI_CHAR, i, 100, MPI_COMM_WORLD);
+		} else {
+			// Send the remaining part to the last worker
+			MPI_Send(txt+(offset*i)-patlen+1, txtlen - offset*i + patlen -1, MPI_CHAR, i, 101, MPI_COMM_WORLD);
 		}
+	}
 	return chunk;
 }
 
 
+// Receives a chunk of the text sent by rank 0 (master process)
 char *receive_dataset(size_t offset, size_t txtlen, size_t patlen, size_t *chunklen, int rank, int executors){
 
+	// For all workers except the last one: receive a fixed-size chunk
 	if (rank < executors-1)
 	{
 		*chunklen = offset + patlen -1;
@@ -113,6 +122,7 @@ char *receive_dataset(size_t offset, size_t txtlen, size_t patlen, size_t *chunk
 		return chunk;
 	}
 
+	// Last worker gets the remaining bytes
 	if (rank == executors-1)
 	{
 		*chunklen = txtlen - rank*offset + patlen -1;
@@ -122,5 +132,6 @@ char *receive_dataset(size_t offset, size_t txtlen, size_t patlen, size_t *chunk
 		MPI_Recv(chunk, *chunklen, MPI_CHAR, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		return chunk;
 	}
+	// Should never reach this if rank is valid
 	return NULL;
 }
