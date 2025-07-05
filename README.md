@@ -45,7 +45,7 @@ gcc -o serial_search serial.c ../MPI/Advanced\ Computer\ Architecture/Libraries/
 #### Run parallel version
 
 ```bash
-mpirun -np 4 ./parallel_search pattern.txt TestGenome.txt
+mpirun -np 4 ./parallel_search pattern.txt text_genome.txt
 ```
 
 #### Run serial version
