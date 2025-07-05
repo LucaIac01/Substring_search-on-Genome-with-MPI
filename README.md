@@ -67,7 +67,3 @@ For a detailed explanation of the algorithm, performance metrics, and architectu
 ## 🧠 Authors
 
 - *Luca Iacopino - Calogero Bugia*
-
-## 📜 License
-
-This project is licensed under the MIT License. See `LICENSE` for details.
