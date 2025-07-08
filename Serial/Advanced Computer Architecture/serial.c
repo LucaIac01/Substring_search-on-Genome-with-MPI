@@ -8,7 +8,7 @@
 
 void rabin_karp(char *txt, char *pattern, const size_t lentxt, const size_t lenpat, long long int *occurrences);
 
-char *readFile(const char *filename, size_t *len) {
+char *readFile(char *filename, size_t *len) {
   // Open the file in read mode
     FILE *f = fopen(filename, "r");                       
     if (!f) {

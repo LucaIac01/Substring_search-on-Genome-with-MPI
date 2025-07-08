@@ -33,7 +33,7 @@ size_t who_is_active(int *active_flags, size_t text_length, size_t pattern_lengt
 }
 
 
-char *readFile(const char *filename, size_t *len) {
+char *readFile(char *filename, size_t *len) {
   // Open the file in read mode
     FILE *f = fopen(filename, "r");                       
     if (!f) {
